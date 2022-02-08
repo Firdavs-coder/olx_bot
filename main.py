@@ -4,6 +4,7 @@ from requests.api import get
 import telebot
 from telebot import types
 
+# bot = telebot.TeleBot("5042865364:AAH4Tndi4n_vawDY9sXyEUlS4omPIePaVT4", parse_mode=None) # You can set parse_mode by default. HTML or MARKDOWN
 bot = telebot.TeleBot("2143029358:AAHWODHfo7Q0WFQv73MsScR4XJhVENKuRK8", parse_mode=None) # You can set parse_mode by default. HTML or MARKDOWN
 # 0️⃣1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣🔟
 numbers = {
@@ -18,27 +19,36 @@ numbers = {
     '8':'8️⃣',
     '9':'9️⃣',
 }
-# {numbers[j+1]}
-# price = news[0].select('p[class="price"] strong')[0].text
-# pic = news[0].select('img[class="fleft"]')[0]['src']
-# title = news[0].select('img[class="fleft"]')[0]['alt']
-# address = news[0].select('i[data-icon="location-filled"]')[0].parent.text
-# date = news[0].select('i[data-icon="clock"]')[0].parent.text
-# general = f"{address} {date}"
+
+
+
+@bot.message_handler(commands=['subs'])
+def start(message):
+    if message.from_user.username == 'shavkatNor':
+        res = requests.get("https://telegrambotbazasi.pythonanywhere.com//view_olx_users")
+        subs = res.json()['subscribes_count']
+        bot.send_message(message.chat.id, f"Obunachilaringiz <b>{subs}</b> ta", parse_mode='HTML')
+
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
-    if message.text != '/start':
-        text = (message.text).replace(' ','-')
-        # print(text)
-        sahifa = f"https://www.olx.uz/oz/list/q-{text}/"
-        r = requests.get(sahifa)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        news = soup.select('tr[class="wrap"]') # mahsulotlar
-        print(len(news))
-        bot.send_message(message.chat.id,'🕔')
-        filtering_products(news,message)
-    else:
-        bot.send_message(message.chat.id, 'Assalomu alaykum. Olx ning norasmiy botiga xush kelibsiz.\nBu botda siz hech qanday qiyinchiliklarsiz olx dan bir qancha mahsulotlarni topishingiz mumkin.\n<a href="https://www.olx.uz/oz/">Web Sayt</a>', parse_mode='HTML')
+    if check(message):
+        if message.text != '/start':
+            text = (message.text).replace(' ','-')
+            # print(text)
+            sahifa = f"https://www.olx.uz/oz/list/q-{text}/"
+            r = requests.get(sahifa)
+            soup = BeautifulSoup(r.text, 'html.parser')
+            news = soup.select('tr[class="wrap"]') # mahsulotlar
+            print(len(news))
+            bot.send_message(message.chat.id,'🕔')
+            filtering_products(news,message)
+        else:
+            save_users(message)
+            markup = types.InlineKeyboardMarkup(row_width=1)
+            itembtna = types.InlineKeyboardButton('Kanalga o\'tish', url='https://t.me/python_flutter_uz')
+            itembtnv = types.InlineKeyboardButton('Tekshirish', callback_data='check')
+            markup.add(itembtna, itembtnv)
+            bot.send_message(message.chat.id, 'Assalomu alaykum. Olx ning norasmiy botiga xush kelibsiz.\nBu botda siz hech qanday qiyinchiliklarsiz olx dan bir qancha mahsulotlarni topishingiz mumkin.\n<a href="https://www.olx.uz/oz/">Web Sayt</a>', parse_mode='HTML', reply_markup=markup)
     
 
 def filtering_products(news,message):
@@ -96,5 +106,48 @@ def filtering_products(news,message):
         phone = types.InlineKeyboardButton('📞 Web', callback_data=str(get_link))
         markup.add(itembtna, phone)
         bot.send_photo(message.chat.id, pic, caption=text, parse_mode='HTML')
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    subscribe = bot.get_chat_member(chat_id=-1001373178208, user_id=call.from_user.id).status
+    if subscribe == 'creator' or subscribe == 'member' or subscribe == 'administrator':
+        bot.send_message(call.from_user.id, "✅Botimizdan bemalol foydalanishingiz mumkin!\n🔍Foydalanish uchun so'z yuboring.",)
+    else:
+        bot.send_message(call.from_user.id, "👉Iltimos. kanalga a'zo bo'ling\n@python_flutter_uz")   
+
+def add_recline(message):
+    if message.from_user.username == 'shavkatNor' and message.caption:
+        res = requests.get("https://telegrambotbazasi.pythonanywhere.com/view_olx_users")
+        users = res.json()['data']
+        for i in users:
+            id = i['name']
+            try:
+                bot.forward_message(int(id),message.chat.id,message.message_id)
+            except:
+                res = requests.get(f"https://telegrambotbazasi.pythonanywhere.com/olx/delete/{id}")
+
+@bot.message_handler(content_types=['video'])
+def video(message):
+    if message.from_user.username == 'shavkatNor' and message.caption:
+        add_recline(message)
+
+@bot.message_handler(content_types=['photo'])
+def img(message):
+    save_users(message)
+    if message.from_user.username == 'shavkatNor' and message.caption:
+        add_recline(message)
+
+def check(message):
+    subscribe = bot.get_chat_member(chat_id=-1001373178208, user_id=message.from_user.id).status
+    if subscribe == 'creator' or subscribe == 'member' or subscribe == 'administrator':
+        return True
+    else:
+        bot.send_message(message.chat.id, "Iltimos. kanalga a'zo bo'ling\n👉@python_flutter_uz") 
+        return False
+
+def save_users(message):
+    id = message.from_user.id
+    ok = requests.get(f"https://telegrambotbazasi.pythonanywhere.com/olx/add/{id}")
 
 bot.infinity_polling()
