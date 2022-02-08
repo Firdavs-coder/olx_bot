@@ -5,7 +5,7 @@ import telebot
 from telebot import types
 
 # bot = telebot.TeleBot("5042865364:AAH4Tndi4n_vawDY9sXyEUlS4omPIePaVT4", parse_mode=None) # You can set parse_mode by default. HTML or MARKDOWN
-bot = telebot.TeleBot("2143029358:AAHWODHfo7Q0WFQv73MsScR4XJhVENKuRK8", parse_mode=None) # You can set parse_mode by default. HTML or MARKDOWN
+bot = telebot.TeleBot("2143029358:AAEUMfcLE7mUigh5NRrzJbWc75MGtLaPySk", parse_mode=None) # You can set parse_mode by default. HTML or MARKDOWN
 # 0️⃣1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣🔟
 numbers = {
     '0':'0️⃣',
